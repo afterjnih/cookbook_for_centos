@@ -142,3 +142,12 @@ end
     make install
   EOH
 end
+
+# dotfilesの配置
+directory '~/dotfiles' do
+ owner 'vagrant'
+ group 'vagrant'
+ mode  '0755'
+ action :create
+end
+
