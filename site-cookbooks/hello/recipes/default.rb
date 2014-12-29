@@ -151,3 +151,17 @@ directory '~/dotfiles' do
  action :create
 end
 
+git "~/dotfiles" do
+ repository "git@github.com:afterjnih/vimrc.git"
+ reference "master"
+ action :sync
+end
+
+bash "ln-dotfiles" do
+  cwd "~/dotfiles"
+  code <<-EOH
+    ln -s .vimrc ~/
+  EOH
+end
+ 
+ 
