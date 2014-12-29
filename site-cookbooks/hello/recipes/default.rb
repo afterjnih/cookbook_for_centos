@@ -40,7 +40,6 @@ yum_repository 'epel' do
   action :create
 end
 
-
 %w{/usr/local/rbenv/shims /usr/local/rbenv/versions}.each do |dir|
   directory dir do
     action :create 
@@ -115,3 +114,31 @@ execute "rbenv rehash" do
   action :run
 end
 
+ %w{ gcc make ncurse-devel mercurial perl-devel perl-ExtUtils-Embed ruby-devel python-devel}.each do |pkg|
+  package pkg do
+   action :install
+  end
+ end
+ 
+ bash "build vim" do
+#  not_if "vim --version | grep 7.4"
+  cwd /tmp
+  code <<-EOH
+    hg clone https://vim.googlecode.com/hg/ vim
+    cd vim
+    ./configure \
+--with-features=huge \
+--disable-gui \
+--without-x \
+--disable-gpm \
+--disable-nls \
+--enable-multibyte \
+--enable-rubyinterp \
+--enable-pythoninterp \
+--enable-perlinterp \
+--enable-cscope
+   
+    make
+    make install
+  EOH
+end
