@@ -23,14 +23,14 @@ git "/usr/local/rbenv" do
 #action :checkout
 end
 
-bash 'add_epel' do
-  user 'root'
-  code <<-EOC
-    rpm -ivh http://ftp-srv2.kddilabs.jp/Linux/distributions/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm
-    sed -i -e "s/enabled *= *1/enabled=0/g" /etc/yum.repos.d/epel.repo
-  EOC
-  creates "/etc/yum.repos.d/epel.repo"
-end
+#bash 'add_epel' do
+#  user 'root'
+#  code <<-EOC
+#    rpm -ivh http://ftp-srv2.kddilabs.jp/Linux/distributions/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm
+#    sed -i -e "s/enabled *= *1/enabled=0/g" /etc/yum.repos.d/epel.repo
+#  EOC
+#  creates "/etc/yum.repos.d/epel.repo"
+#end
 
 yum_repository 'epel' do
   description 'Extra Packages for Enterprise Linux'
@@ -90,9 +90,10 @@ end
 #end
 
 execute "rbenv install 2.0.0-p353" do
+  not_if { ::File.exists?("/usr/local/rbenv/versions/2.0.0-p353") }
   command "/usr/local/rbenv/bin/rbenv install 2.0.0-p353"
   user 'root'
-  not_if { ::File.exists?("/usr/local/rbenv/versions/2.0.0-p353") }
+  
 
 end
 
@@ -114,54 +115,126 @@ execute "rbenv rehash" do
   action :run
 end
 
- %w{ gcc make ncurse-devel mercurial perl-devel perl-ExtUtils-Embed ruby-devel python-devel}.each do |pkg|
-  package pkg do
+ %w{ gcc make ncurses-devel mercurial perl-devel perl-ExtUtils-Embed ruby-devel python-devel}.each do |pkg|
+  yum_package pkg do
    action :install
   end
  end
  
- bash "build vim" do
+ bash "clone vim" do
 #  not_if "vim --version | grep 7.4"
-  cwd /tmp
+#  cwd /tmp
+  cwd "/home/vagrant"
   code <<-EOH
     hg clone https://vim.googlecode.com/hg/ vim
-    cd vim
-    ./configure \
---with-features=huge \
---disable-gui \
---without-x \
---disable-gpm \
---disable-nls \
---enable-multibyte \
---enable-rubyinterp \
---enable-pythoninterp \
---enable-perlinterp \
---enable-cscope
-   
+    cd vim/src
+    ./configure --with-features=huge --disable-gui --without-x --disable-gpm --disable-nls --enable-multibyte --enable-rubyinterp --enable-pythoninterp --enable-perlinterp --enable-cscope
     make
     make install
   EOH
+  creates "/usr/local/bin/vim"
 end
 
+# bash "build vim" do
+#  not_if "vim --version | grep 7.4"
+#  cwd /tmp
+#  cwd "~/vim/src"
+#  code <<-EOH
+#    ./configure --with-features=huge --disable-gui --without-x --disable-gpm --disable-nls --enable-multibyte --enable-rubyinterp --enable-pythoninterp --enable-perlinterp --enable-cscope
+#    make
+#    make install
+#  EOH
+#end
+
+
+
 # dotfilesの配置
-directory '~/dotfiles' do
+directory '/home/vagrant/dotfiles' do
  owner 'vagrant'
  group 'vagrant'
  mode  '0755'
  action :create
 end
 
-git "~/dotfiles" do
- repository "git@github.com:afterjnih/vimrc.git"
+git "/home/vagrant/dotfiles" do
+ repository "https://github.com/afterjnih/vimrc.git"
+# repository "git://github.com/afterjnih/vimrc.git"
  reference "master"
  action :sync
 end
 
 bash "ln-dotfiles" do
-  cwd "~/dotfiles"
+  cwd "/home/vagrant/dotfiles"
   code <<-EOH
-    ln -s .vimrc ~/
+    ln -s /home/vagrant/dotfiles/.vimrc /home/vagrant/.vimrc
   EOH
+  creates "/home/vagrant/.vimrc"
 end
  
- 
+#neobundleのインストール
+directory '/home/vagrant/.vim' do
+ owner 'vagrant'
+ group 'vagrant'
+ mode  '0755'
+ action :create
+end
+
+directory '/home/vagrant/.vim/bundle' do
+ owner 'vagrant'
+ group 'vagrant'
+ mode  '0755'
+ action :create
+end
+
+directory '/home/vagrant/.vim/bundle/neobundle.vim' do
+ owner 'vagrant'
+ group 'vagrant'
+ mode  '0755'
+ action :create
+end
+
+#directory '/home/vagrant/tmp' do
+# owner 'vagrant'
+# group 'vagrant'
+# mode  '0755'
+# action :create
+#end
+#
+
+git "/home/vagrant/.vim/bundle/neobundle.vim" do
+ repository "https://github.com/Shougo/neobundle.vim.git"
+ reference "master"
+ action :sync
+end
+
+#bash "lnstall NeoBundleInstall" do
+#  cwd "/home/vagrant/tmp/bin"
+#  code <<-EOH
+#    ./install.sh
+#  EOH
+#  #creates "/home/vagrant/.vimrc"
+#end
+
+#bash "lnstall NeoBundleInstall" do
+#  cwd "/home/vagrant"
+#  environment "HOME" => '/home/vagrant'
+#  code <<-EOH
+#    curl https://raw.githubusercontent.com/Shougo/neobundle.vim/master/bin/install.sh | sh
+#  EOH
+#  #creates "/home/vagrant/.vimrc"
+#end
+#
+#bash "lnstall NeoBundleInstall" do
+#  cwd "/home/vagrant/tmp"
+#  code <<-EOH
+#    ./install.sh
+#  EOH
+#  #creates "/home/vagrant/.vimrc"
+#end
+
+
+#git "/home/vagrant/.vim/bundle" do
+# repository "https://github.com/Shougo/neobundle.vim"
+# reference "master"
+# action :sync
+#end
