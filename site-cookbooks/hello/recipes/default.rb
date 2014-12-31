@@ -115,7 +115,7 @@ execute "rbenv rehash" do
   action :run
 end
 
- %w{ gcc make ncurses-devel mercurial perl-devel perl-ExtUtils-Embed ruby-devel python-devel}.each do |pkg|
+ %w{ gcc make ncurses-devel mercurial perl-devel perl-ExtUtils-Embed ruby-devel python-devel ctags}.each do |pkg|
   yum_package pkg do
    action :install
   end
